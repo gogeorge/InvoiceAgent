@@ -1,5 +1,6 @@
 import openai
 import re
+from config import openai_client
 
 def extract_invoice_data(text):
     prompt = f"""Extract the following details from the invoice text:
@@ -15,12 +16,16 @@ def extract_invoice_data(text):
     Date: <date>
     Amount: <amount>"""
     
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
+    response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
         max_tokens=100
     )
-    match = re.search(r'Client:\s*(.+)\nDate:\s*(.+)\nAmount:\s*(.+)', response.choices[0].text.strip())
+    
+    response_text = response.choices[0].message.content.strip()
+    match = re.search(r'Client:\s*(.+)\nDate:\s*(.+)\nAmount:\s*(.+)', response_text)
     if match:
         return match.group(1), match.group(2), match.group(3)
     return None, None, None

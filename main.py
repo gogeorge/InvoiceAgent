@@ -5,8 +5,10 @@ from append_sheet import append_to_sheet
 from config import FOLDER_ID, drive_service
 
 processed_files = set()
+print("Starting the program...")
 
 while True:
+    print("Checking for new files...")
     results = drive_service.files().list(q=f"'{FOLDER_ID}' in parents and mimeType='application/pdf'",
                                          spaces='drive',
                                          fields="files(id, name)").execute()
