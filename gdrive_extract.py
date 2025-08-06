@@ -1,10 +1,23 @@
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+import io
+import pdfplumber
+from config import FOLDER_ID, SPREADSHEET_ID, SHEET_NAME, drive_service, sheets_service
 
-from config import FOLDER_ID, SPREADSHEET_ID, SHEET_NAME, SERVICE_ACCOUNT_FILE, SCOPES
 
+def download_pdf(file_id):
+    request = drive_service.files().get_media(fileId=file_id)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+    fh.seek(0)
+    return fh
 
-creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-drive_service = build('drive', 'v3', credentials=creds)
-sheets_service = build('sheets', 'v4', credentials=creds)
+# === EXTRACT TEXT FROM PDF ===
+def extract_text_from_pdf(file_bytes):
+    with pdfplumber.open(file_bytes) as pdf:
+        text = ''
+        for page in pdf.pages:
+            text += page.extract_text() + '\n'
+    return text

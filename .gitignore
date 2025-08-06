@@ -27,6 +27,7 @@ MANIFEST
 
 # Virtual environments
 venv/
+invoice-env/
 env/
 ENV/
 env.bak/
