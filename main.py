@@ -18,10 +18,10 @@ while True:
             print(f"Processing {item['name']}...")
             pdf_file = download_pdf(item['id'])
             text = extract_text_from_pdf(pdf_file)
-            client, date, amount = extract_invoice_data(text)
+            client, date, amount, invoice_number, days = extract_invoice_data(text)
             if client and date and amount:
-                append_to_sheet([client, date, amount])
-                print(f"Added to sheet: {client}, {date}, {amount}")
+                append_to_sheet([invoice_number, client, date, amount, days])
+                print(f"Added to sheet: Invoice #{invoice_number}, {client}, {date}, {amount}, {days} days")
             else:
                 print("Failed to extract data.")
             processed_files.add(item['id'])
