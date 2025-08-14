@@ -1,10 +1,14 @@
 import time
+import threading
 from gdrive_extract import download_pdf, extract_text_from_pdf
 from ai_extract import extract_invoice_data
 from append_sheet import append_to_sheet
 from config import FOLDER_ID, drive_service
+from invoice_monitor import run_continuous_monitor
+
 
 processed_files = set()
+threading.Thread(target=run_continuous_monitor, daemon=True).start()
 print("Starting the program...")
 
 while True:
