@@ -1,6 +1,7 @@
 # Configuration files with sensitive data
 config.py
 service_account.json
+env.invoiceagent.zsh
 
 # Python
 __pycache__/

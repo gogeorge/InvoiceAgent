@@ -2,7 +2,20 @@ import datetime
 from datetime import timedelta
 import time
 import re
-from config import sheets_service, SPREADSHEET_ID, SHEET_NAME
+import smtplib
+from email.mime.text import MIMEText
+from typing import List
+from config import (
+    sheets_service,
+    SPREADSHEET_ID,
+    SHEET_NAME,
+    SMTP_SERVER,
+    SMTP_PORT,
+    EMAIL_SENDER,
+    EMAIL_RECIPIENTS,
+    SMTP_USERNAME,
+    SMTP_PASSWORD,
+)
 
 def get_invoice_data():
     """Fetch all invoice data from the spreadsheet"""
@@ -119,19 +132,39 @@ def generate_alert_message(expiring_invoices):
     
     return message
 
+def _send_email(subject: str, body: str, recipients: List[str]):
+    """Send a plain-text email using configured SMTP settings."""
+    if not EMAIL_SENDER or not recipients:
+        print("Email not configured: missing EMAIL_SENDER or EMAIL_RECIPIENTS")
+        return
+
+    msg = MIMEText(body, _charset="utf-8")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_SENDER
+    msg["To"] = ", ".join(recipients)
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
+            if SMTP_PORT == 587:
+                server.starttls()
+                server.ehlo()
+            if SMTP_USERNAME and SMTP_PASSWORD:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.sendmail(EMAIL_SENDER, recipients, msg.as_string())
+        print(f"Email sent to: {', '.join(recipients)}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+
 def send_notification(message):
     """Send notification about expiring invoices"""
-    # For now, just print the message
-    # You can extend this to send emails, Slack messages, etc.
     print("\n" + "="*50)
     print(message)
     print("="*50 + "\n")
-    
-    # TODO: Add email/Slack integration here
-    # Example email integration:
-    # import smtplib
-    # from email.mime.text import MIMEText
-    # # Send email logic here
+
+    subject = "Weekly Invoice Payment Alerts"
+    _send_email(subject, message, EMAIL_RECIPIENTS)
 
 def run_weekly_check():
     """Main function to run the weekly invoice check"""
