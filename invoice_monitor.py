@@ -1,4 +1,6 @@
 import datetime
+import os
+from email.utils import formatdate, make_msgid
 from datetime import timedelta
 import time
 import re
@@ -138,21 +140,47 @@ def _send_email(subject: str, body: str, recipients: List[str]):
         print("Email not configured: missing EMAIL_SENDER or EMAIL_RECIPIENTS")
         return
 
-    msg = MIMEText(body, _charset="utf-8")
-    msg["Subject"] = subject
+    # Optionally strip emojis and non-ASCII to reduce spam filtering risk
+    if os.environ.get("EMAIL_PLAIN") == "1":
+        subject_to_send = subject.encode("ascii", "ignore").decode("ascii")
+        body_to_send = body.encode("ascii", "ignore").decode("ascii")
+    else:
+        subject_to_send = subject
+        body_to_send = body
+
+    msg = MIMEText(body_to_send, _charset="utf-8")
+    msg["Subject"] = subject_to_send
     msg["From"] = EMAIL_SENDER
     msg["To"] = ", ".join(recipients)
+    msg["Date"] = formatdate(localtime=True)
+    try:
+        msg["Message-ID"] = make_msgid(domain=EMAIL_SENDER.split("@")[-1])
+    except Exception:
+        msg["Message-ID"] = make_msgid()
 
     try:
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            if os.environ.get("SMTP_DEBUG") == "1":
+                server.set_debuglevel(1)
             server.ehlo()
             if SMTP_PORT == 587:
                 server.starttls()
                 server.ehlo()
             if SMTP_USERNAME and SMTP_PASSWORD:
                 server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.sendmail(EMAIL_SENDER, recipients, msg.as_string())
-        print(f"Email sent to: {', '.join(recipients)}")
+            refused = server.sendmail(EMAIL_SENDER, recipients, msg.as_string())
+        if refused:
+            print(f"Some recipients were refused: {refused}")
+        else:
+            print(f"Email sent to: {', '.join(recipients)}")
+    except smtplib.SMTPRecipientsRefused as e:
+        print(f"SMTPRecipientsRefused: {e.recipients}")
+    except smtplib.SMTPResponseException as e:
+        try:
+            error_text = e.smtp_error.decode() if isinstance(e.smtp_error, bytes) else str(e.smtp_error)
+        except Exception:
+            error_text = str(e.smtp_error)
+        print(f"SMTPResponseException: {e.smtp_code} {error_text}")
     except Exception as e:
         print(f"Failed to send email: {e}")
 
