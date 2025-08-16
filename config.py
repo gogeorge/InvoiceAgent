@@ -1,23 +1,17 @@
+import openai
 import os
 import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from openai import OpenAI
 
 # === CORE CONFIG (from environment) ===
 FOLDER_ID = os.getenv('FOLDER_ID', '')
 SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', '')
 SHEET_NAME = os.getenv('SHEET_NAME', 'Invoices')
+SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets']
 
-# Use least-privilege scopes
-SCOPES = [
-    'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/spreadsheets',
-]
-
-# === OPENAI CLIENT ===
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+# Initialize OpenAI client with new API format
+openai_client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 # === GOOGLE API CLIENTS ===
 # Prefer credentials from env var JSON; fall back to file path
