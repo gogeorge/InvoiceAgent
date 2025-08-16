@@ -3,7 +3,6 @@ import io
 import pdfplumber
 from config import FOLDER_ID, SPREADSHEET_ID, SHEET_NAME, drive_service, sheets_service
 
-
 def download_pdf(file_id):
     request = drive_service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
