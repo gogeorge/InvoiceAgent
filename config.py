@@ -3,12 +3,27 @@ import os
 import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
+
+# Load environment variables from local zsh env file
+load_dotenv("env.invoiceagent.zsh", override=True)
 
 # === CORE CONFIG (from environment) ===
 FOLDER_ID = os.getenv('FOLDER_ID', '')
 SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', '')
 SHEET_NAME = os.getenv('SHEET_NAME', 'Invoices')
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets']
+
+# Validate required configuration early
+_missing_vars = [name for name, value in (
+    ('SPREADSHEET_ID', SPREADSHEET_ID),
+    ('FOLDER_ID', FOLDER_ID),
+) if not value]
+if _missing_vars:
+    raise RuntimeError(
+        f"Missing required environment variables: {', '.join(_missing_vars)}. "
+        "Set them in env.invoiceagent.zsh and reload (or source the file) before running."
+    )
 
 # Initialize OpenAI client with new API format
 openai_client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
